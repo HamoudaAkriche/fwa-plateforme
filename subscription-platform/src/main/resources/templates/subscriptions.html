@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Gestion Abonnements 5G FWA</title>
+
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<div class="container mt-5">
+
+    <div class="card shadow p-4 mb-4">
+        <h3 class="mb-3 text-primary">➕ Ajouter un abonnement</h3>
+
+        <form action="/web/add" method="post" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" name="msisdn" class="form-control" placeholder="msisdn" required>
+            </div>
+            <div class="col-md-4">
+                <input type="text" name="customerName" class="form-control" placeholder="Nom Client" required>
+            </div>
+            <div class="col-md-4">
+                <input type="text" name="offer" class="form-control" placeholder="Offre FWA" required>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card shadow p-4">
+        <h3 class="mb-3 text-success">📋 Liste des abonnements</h3>
+    
+        <form method="get" action="/web/subscriptions" class="row mb-3">
+            <div class="col-md-10">
+                <input type="text"
+                    name="q"
+                    class="form-control"
+                    placeholder="Rechercher par MSISDN, Client ou Offre..."
+                    th:value="${q}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+            🔎 Rechercher
+                </button>
+            </div>
+        </form>
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>MSISDN</th>
+                <th>Client</th>
+                <th>Offre</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="sub : ${subscriptions}">
+                <td th:text="${sub.id}"></td>
+                <td th:text="${sub.msisdn}"></td>
+                <td th:text="${sub.customerName}"></td>
+                <td th:text="${sub.offer}"></td>
+
+                <!-- Status color -->
+                <td>
+                    <span th:if="${sub.status.name() == 'CREATED'}" class="badge bg-secondary">CREATED</span>
+                    <span th:if="${sub.status.name() == 'ACTIVE'}" class="badge bg-success">ACTIVE</span>
+                    <span th:if="${sub.status.name() == 'SUSPENDED'}" class="badge bg-warning text-dark">SUSPENDED</span>
+                    <span th:if="${sub.status.name() == 'TERMINATED'}" class="badge bg-danger">TERMINATED</span>
+                </td>
+
+                <td>
+                    <a th:href="@{'/web/activate/' + ${sub.id}}" class="btn btn-sm btn-success">Activate</a>
+                    <a th:href="@{'/web/suspend/' + ${sub.id}}" class="btn btn-sm btn-warning">Suspend</a>
+                    <a th:href="@{'/web/terminate/' + ${sub.id}}" class="btn btn-sm btn-danger">Terminate</a>
+                    <a th:href="@{'/web/delete/' + ${sub.id}}" class="btn btn-sm btn-outline-dark">Delete</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+</body>
+</html>

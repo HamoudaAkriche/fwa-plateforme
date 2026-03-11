@@ -1,0 +1,63 @@
+<div class="login-shell">
+  <div class="login-gradient-orb orb-one" aria-hidden="true"></div>
+  <div class="login-gradient-orb orb-two" aria-hidden="true"></div>
+
+  <div class="login-layout">
+    <section class="login-brand-panel">
+      <p class="eyebrow">FWA Subscription Platform</p>
+      <h1>Welcome</h1>
+      <p class="intro">
+        Sign in to monitor subscription health, manage lifecycle actions, and track operations history in real time.
+      </p>
+    </section>
+
+    <section class="login-card-wrap">
+      <div class="login-card">
+        <div class="login-card-header">
+          <h2>Account Sign In</h2>
+          <p>Use your platform credentials to continue.</p>
+          <p>Demo access: <strong>hamouda</strong> / <strong>1234</strong></p>
+        </div>
+
+        <form class="login-form" (ngSubmit)="onSubmit()">
+          <label for="username">Username</label>
+          <input
+            id="username"
+            name="username"
+            [(ngModel)]="username"
+            autocomplete="username"
+            placeholder="Enter username"
+            required
+            [disabled]="loading" />
+
+          <label for="password">Password</label>
+          <div class="password-row">
+            <input
+              id="password"
+              name="password"
+              [(ngModel)]="password"
+              [type]="showPassword ? 'text' : 'password'"
+              autocomplete="current-password"
+              placeholder="Enter password"
+              required
+              [disabled]="loading" />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+              [disabled]="loading">
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+
+          <button type="submit" class="submit-btn" [disabled]="loading">
+            {{ loading ? 'Signing in...' : 'Sign in' }}
+          </button>
+        </form>
+
+        <p class="error" *ngIf="error">{{ error }}</p>
+      </div>
+    </section>
+  </div>
+</div>

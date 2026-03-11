@@ -1,0 +1,286 @@
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Subscriptions</h2>
+    <button type="button" class="btn btn-outline-danger" (click)="logout()">Logout</button>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-2-4">
+      <div class="card stat-card stat-total h-100">
+        <div class="card-body">
+          <div class="stat-label">Total subscriptions</div>
+          <div class="stat-value">{{ loadingStats ? '...' : stats.totalSubscriptions }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-2-4">
+      <div class="card stat-card stat-active h-100">
+        <div class="card-body">
+          <div class="stat-label">Active</div>
+          <div class="stat-value">{{ loadingStats ? '...' : stats.active }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-2-4">
+      <div class="card stat-card stat-suspended h-100">
+        <div class="card-body">
+          <div class="stat-label">Suspended</div>
+          <div class="stat-value">{{ loadingStats ? '...' : stats.suspended }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-2-4">
+      <div class="card stat-card stat-terminated h-100">
+        <div class="card-body">
+          <div class="stat-label">Terminated</div>
+          <div class="stat-value">{{ loadingStats ? '...' : stats.terminated }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-2-4">
+      <div class="card stat-card stat-today h-100">
+        <div class="card-body">
+          <div class="stat-label">Created today</div>
+          <div class="stat-value">{{ loadingStats ? '...' : stats.createdToday }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header fw-bold">Recherche d'abonnements</div>
+    <div class="card-body">
+      <form (ngSubmit)="search()">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-8">
+            <input
+              class="form-control"
+              name="searchQuery"
+              [(ngModel)]="q"
+              placeholder="Search (msisdn, customer, offer)..." />
+          </div>
+          <div class="col-md-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100">Search</button>
+            <button type="button" class="btn btn-secondary w-100" (click)="resetSearch()">Reset</button>
+          </div>
+        </div>
+      </form>
+      <div class="mt-2" *ngIf="error">
+        <div class="alert alert-danger mb-0">{{ error }}</div>
+      </div>
+      <div class="mt-2" *ngIf="loading">
+        <div class="alert alert-info mb-0">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header fw-bold">Ajouter un abonnement</div>
+    <div class="card-body">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <input class="form-control" [(ngModel)]="newMsisdn" placeholder="MSISDN (ex: 216...)" />
+        </div>
+        <div class="col-md-4">
+          <input class="form-control" [(ngModel)]="newCustomerName" placeholder="Nom client" />
+        </div>
+        <div class="col-md-3">
+          <input class="form-control" [(ngModel)]="newOffer" placeholder="Offre (FWA_5G_BASIC)" />
+        </div>
+        <div class="col-md-1 d-grid">
+          <button type="button" class="btn btn-success" (click)="addSubscription()" [disabled]="creating">
+            {{ creating ? '...' : '+' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="row g-2 mt-2 align-items-start">
+        <div class="col-md-3">
+          <label class="form-label small text-muted mb-1">Latitude</label>
+          <input
+            class="form-control"
+            type="number"
+            step="any"
+            [(ngModel)]="newLatitude"
+            (ngModelChange)="onCoordinatesInputChange()"
+            placeholder="Ex: 36.8065" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small text-muted mb-1">Longitude</label>
+          <input
+            class="form-control"
+            type="number"
+            step="any"
+            [(ngModel)]="newLongitude"
+            (ngModelChange)="onCoordinatesInputChange()"
+            placeholder="Ex: 10.1815" />
+        </div>
+        <div class="col-md-6">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <label class="form-label small text-muted mb-0">Position sur la carte</label>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="useCurrentLocation()">
+              Ma position
+            </button>
+          </div>
+          <div id="add-subscription-map" class="subscription-map"></div>
+          <div class="form-text">Clique sur la carte pour choisir l'emplacement du client.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header fw-bold">Liste</div>
+    <div class="card-body p-0">
+      <div *ngIf="!loading && subscriptions.length === 0" class="p-3 text-muted">
+        No data.
+      </div>
+
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-3 pt-3" *ngIf="totalElements > 0">
+        <div class="text-muted small">
+          {{ totalElements }} result(s) - Page {{ page + 1 }} / {{ totalPages || 1 }}
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <label for="pageSize" class="small text-muted mb-0">Rows:</label>
+          <select
+            id="pageSize"
+            class="form-select form-select-sm page-size-select"
+            [ngModel]="size"
+            (ngModelChange)="onPageSizeChange($event)">
+            <option *ngFor="let option of pageSizeOptions" [ngValue]="option">
+              {{ option }}
+            </option>
+          </select>
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="goToPreviousPage()" [disabled]="page === 0">
+            Previous
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="goToNextPage()" [disabled]="page + 1 >= totalPages">
+            Next
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive" *ngIf="subscriptions.length > 0">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>MSISDN</th>
+              <th>Customer</th>
+              <th>Offer</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>CreatedAt</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of subscriptions">
+              <td>{{ s.id }}</td>
+              <td>{{ s.msisdn }}</td>
+              <td>{{ s.customerName }}</td>
+              <td><span class="badge text-bg-secondary">{{ s.offer }}</span></td>
+              <td>{{ formatLocation(s) }}</td>
+              <td>
+                <span class="badge"
+                  [ngClass]="{
+                    'text-bg-warning': s.status === 'CREATED',
+                    'text-bg-success': s.status === 'ACTIVE',
+                    'text-bg-info': s.status === 'SUSPENDED',
+                    'text-bg-dark': s.status === 'TERMINATED'
+                  }">
+                  {{ s.status }}
+                </span>
+              </td>
+              <td>{{ formatDateTime(s.createdAt) }}</td>
+              <td class="text-end">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-success"
+                          (click)="activate(s.id)"
+                      [disabled]="isRowBusy(s.id) || s.status === 'ACTIVE' || s.status === 'TERMINATED'">
+                    {{ rowActionInProgressId === s.id ? 'Please wait...' : 'Activate' }}
+                  </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning"
+                          (click)="suspend(s.id)"
+                      [disabled]="isRowBusy(s.id) || s.status === 'SUSPENDED' || s.status === 'TERMINATED'">
+                    {{ rowActionInProgressId === s.id ? 'Please wait...' : 'Suspend' }}
+                  </button>
+                    <button type="button" class="btn btn-sm btn-outline-dark"
+                          (click)="terminate(s.id)"
+                      [disabled]="isRowBusy(s.id) || s.status === 'TERMINATED'">
+                    {{ rowActionInProgressId === s.id ? 'Please wait...' : 'Résilier' }}
+                  </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                      (click)="delete(s.id)"
+                      [disabled]="isRowBusy(s.id)">
+                    {{ deletingInProgressId === s.id ? 'Deleting...' : 'Delete' }}
+                  </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                      (click)="showHistory(s.id)"
+                      [disabled]="isRowBusy(s.id)">
+                    History
+                  </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-info"
+                      (click)="showPosition(s)"
+                      [disabled]="!hasLocation(s)">
+                      Position
+                    </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="card mt-4" *ngIf="positionForSubscriptionId !== null">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div class="fw-bold">Position abonnement #{{ positionForSubscriptionId }}</div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closePositionMap()">Close</button>
+    </div>
+    <div class="card-body">
+      <div class="small text-muted mb-2">
+        {{ positionCoordinatesText }}
+      </div>
+      <div id="view-subscription-map" class="subscription-map"></div>
+    </div>
+  </div>
+
+  <div class="card mt-4" *ngIf="historyForId !== null">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="fw-bold">History for Subscription #{{ historyForId }}</div>
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeHistory()">Close</button>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="p-3 text-muted" *ngIf="history.length === 0">
+      No history.
+    </div>
+
+    <div class="table-responsive" *ngIf="history.length > 0">
+      <table class="table table-striped align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Action</th>
+            <th>Agent</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let h of history">
+            <td><span class="badge text-bg-primary">{{ h.action }}</span></td>
+            <td>{{ h.performedBy }}</td>
+            <td>{{ formatDateTime(h.actionDate) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
