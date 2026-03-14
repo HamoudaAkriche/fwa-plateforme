@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16
@@ -14,12 +12,20 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   backend:
-    image: subscription-backend
+    image: hamoudaakriche/subscription-backend:latest
     container_name: fwa-backend
     depends_on:
       - postgres
     ports:
       - "8080:8080"
+
+  frontend:
+    image: hamoudaakriche/subscription-frontend:latest
+    container_name: fwa-frontend
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
 
 volumes:
   pgdata:
