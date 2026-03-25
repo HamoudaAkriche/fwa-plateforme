@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PLATFORM_ID } from '@angular/core';
 import { AuthService } from '../../services/auth';
+import { getApiBaseUrl } from '../../services/api-base';
 
 type Subscription = {
   id: number;
@@ -49,7 +50,7 @@ type SubscriptionStats = {
   styleUrl: './subscriptions.css',
 })
 export class Subscriptions implements AfterViewInit, OnDestroy {
-  private apiUrl = 'http://localhost:8080/api/subscriptions';
+  private apiUrl = `${getApiBaseUrl()}/subscriptions`;
   private readonly platformId = inject(PLATFORM_ID);
   private addMap: any = null;
   private addMapMarker: any = null;
@@ -97,6 +98,10 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
     minute: '2-digit',
     second: '2-digit',
   });
+
+  get isSuperAdmin(): boolean {
+    return this.auth.isSuperAdmin();
+  }
   
 
   constructor(
@@ -434,6 +439,10 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
   logout() {
     this.auth.logout();
     this.router.navigateByUrl('/login');
+  }
+
+  openAdminAgentPage() {
+    this.router.navigateByUrl('/admin/agents');
   }
 
   isRowBusy(id: number): boolean {

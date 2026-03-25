@@ -22,8 +22,8 @@ public class AuthController {
         this.jwtService = jwtService;
     }
 
-    record LoginRequest(String username, String password) {}
-    record LoginResponse(String token) {}
+    public record LoginRequest(String username, String password) {}
+    public record LoginResponse(String token, String role) {}
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest req) {
@@ -35,6 +35,6 @@ public class AuthController {
         }
 
         String token = jwtService.generateToken(user.getUsername());
-        return new LoginResponse(token);
+        return new LoginResponse(token, user.getRole());
     }
 }

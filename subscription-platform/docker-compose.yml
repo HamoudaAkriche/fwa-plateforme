@@ -16,6 +16,8 @@ services:
     container_name: fwa-backend
     depends_on:
       - postgres
+    environment:
+      APP_CORS_ALLOWED_ORIGIN_PATTERNS: "*"
     ports:
       - "8080:8080"
 

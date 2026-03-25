@@ -23,10 +23,14 @@ public class AppUserDetailsService implements UserDetailsService {
         AppUser u = repo.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+        String role = (u.getRole() == null || u.getRole().isBlank())
+            ? AppUser.ROLE_AGENT
+            : u.getRole();
+
         return User.builder()
                 .username(u.getUsername())
                 .password(u.getPassword())
-                .roles("USER") // tout le monde pareil
+            .roles(role)
                 .build();
     }
 }

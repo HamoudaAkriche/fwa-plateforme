@@ -25,6 +25,7 @@ public class UserController {
         AppUser user = AppUser.builder()
                 .username(username)
                 .password(encoder.encode(password))
+            .role(AppUser.ROLE_AGENT)
                 .build();
 
         repository.save(user);

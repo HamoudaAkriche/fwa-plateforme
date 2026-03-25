@@ -2,7 +2,12 @@
 
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Subscriptions</h2>
-    <button type="button" class="btn btn-outline-danger" (click)="logout()">Logout</button>
+    <div class="d-flex gap-2">
+      <button *ngIf="isSuperAdmin" type="button" class="btn btn-outline-primary" (click)="openAdminAgentPage()">
+        Manage agents
+      </button>
+      <button type="button" class="btn btn-outline-danger" (click)="logout()">Logout</button>
+    </div>
   </div>
 
   <div class="row g-3 mb-3">

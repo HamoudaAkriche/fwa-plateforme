@@ -21,6 +21,9 @@ import lombok.Setter;
 @Builder
 public class AppUser {
 
+    public static final String ROLE_SUPER_ADMIN = "SUPER_ADMIN";
+    public static final String ROLE_AGENT = "AGENT";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,4 +32,8 @@ public class AppUser {
     private String username;
 
     private String password;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private String role = ROLE_AGENT;
 }
