@@ -9,21 +9,22 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fwa.subscriptionplatform.user.AppUser;
 import com.fwa.subscriptionplatform.user.AppUserRepository;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @RestController
 @RequestMapping("/api/admin")
 public class AdminUserController {
 
     private final AppUserRepository users;
-    private final org.springframework.security.crypto.password.PasswordEncoder encoder;
+    private final BCryptPasswordEncoder encoder;
 
     public AdminUserController(AppUserRepository users,
-                               org.springframework.security.crypto.password.PasswordEncoder encoder) {
+                               BCryptPasswordEncoder encoder) {
         this.users = users;
         this.encoder = encoder;
     }
 
-    public record CreateAgentRequest(String username, String password) {}
+    public record CreateAgentRequest(String username, String password, String role) {}
     public record UserResponse(String username, String role) {}
 
     @PostMapping("/agents")
@@ -37,10 +38,15 @@ public class AdminUserController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
         }
 
+        String role = (req.role() != null && !req.role().isBlank()) ? req.role().trim() : AppUser.ROLE_AGENT;
+        if (!role.equals(AppUser.ROLE_AGENT) && !role.equals(AppUser.ROLE_SUPER_ADMIN)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role");
+        }
+
         var user = AppUser.builder()
                 .username(username)
                 .password(encoder.encode(req.password()))
-                .role(AppUser.ROLE_AGENT)
+                .role(role)
                 .build();
 
         users.save(user);

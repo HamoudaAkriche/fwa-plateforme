@@ -29,11 +29,17 @@ export class Login {
     this.loading = true;
 
     this.auth.login(this.username, this.password).subscribe({
-      next: () => this.router.navigateByUrl('/subscriptions'),
+      next: () => {
+        this.loading = false;
+        this.router.navigateByUrl('/subscriptions');
+      },
       error: () => {
         this.error = 'Invalid credentials';
         this.loading = false;
       },
+      complete: () => {
+        this.loading = false;
+      }
     });
   }
 

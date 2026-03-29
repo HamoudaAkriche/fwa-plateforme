@@ -24,6 +24,25 @@ public class AuthController {
 
     public record LoginRequest(String username, String password) {}
     public record LoginResponse(String token, String role) {}
+    public record SignupRequest(String username, String password) {}
+    public record SignupResponse(String username, String role) {}
+    @PostMapping("/signup")
+    public SignupResponse signup(@RequestBody SignupRequest req) {
+        if (req.username() == null || req.username().isBlank() || req.password() == null || req.password().isBlank()) {
+            throw new RuntimeException("Username and password are required");
+        }
+        String username = req.username().trim();
+        if (users.findByUsername(username).isPresent()) {
+            throw new RuntimeException("Username already exists");
+        }
+        var user = com.fwa.subscriptionplatform.user.AppUser.builder()
+            .username(username)
+            .password(encoder.encode(req.password()))
+            .role(com.fwa.subscriptionplatform.user.AppUser.ROLE_AGENT)
+            .build();
+        users.save(user);
+        return new SignupResponse(user.getUsername(), user.getRole());
+    }
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest req) {

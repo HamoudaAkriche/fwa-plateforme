@@ -47,15 +47,18 @@ export class AdminAgents {
       })
       .subscribe({
         next: (res) => {
-          this.loading = false;
           this.username = '';
           this.password = '';
           this.success = `Compte ${res.username} cree avec role ${res.role}.`;
         },
         error: (err) => {
-          this.loading = false;
           this.error = err?.error?.message ?? 'Creation impossible';
         },
+        complete: () => {
+          setTimeout(() => {
+            this.loading = false;
+          });
+        }
       });
   }
 
