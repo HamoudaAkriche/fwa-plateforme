@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY target/subscription-platform-0.0.1-SNAPSHOT.jar app.jar
 
-EXPOSE 8080
+# application.properties sets server.port=8081; expose and force the container to use 8081
+EXPOSE 8081
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Dserver.port=8081", "-jar", "app.jar"]
