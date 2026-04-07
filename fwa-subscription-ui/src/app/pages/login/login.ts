@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../services/auth';
 
 @Component({
@@ -28,19 +29,21 @@ export class Login {
     this.error = '';
     this.loading = true;
 
-    this.auth.login(this.username, this.password).subscribe({
-      next: () => {
-        this.loading = false;
-        this.router.navigateByUrl('/subscriptions');
-      },
-      error: () => {
-        this.error = 'Invalid credentials';
-        this.loading = false;
-      },
-      complete: () => {
-        this.loading = false;
-      }
-    });
+    this.auth.login(this.username, this.password)
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.router.navigateByUrl('/subscriptions');
+        },
+        error: (err) => {
+          console.error('Login error:', err);
+          this.error = err?.message || 'Invalid credentials';
+        }
+      });
   }
 
   togglePasswordVisibility() {

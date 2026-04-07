@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fwa-subscription-ui
+  labels:
+    app: fwa-subscription-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fwa-subscription-ui
+  template:
+    metadata:
+      labels:
+        app: fwa-subscription-ui
+    spec:
+      containers:
+        - name: fwa-subscription-ui
+          image: hamoudaakriche/fwa-subscription-ui:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80

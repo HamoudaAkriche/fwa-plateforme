@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { tap } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 import { getApiBaseUrl } from './api-base';
 
 @Injectable({
@@ -20,6 +21,11 @@ export class AuthService {
         tap(res => {
           localStorage.setItem('token', res.token);
           localStorage.setItem(AuthService.ROLE_KEY, res.role ?? 'AGENT');
+        }),
+        catchError(err => {
+          console.error('AuthService.login error:', err);
+          const message = err?.error?.message ?? err?.message ?? 'Invalid credentials';
+          return throwError(() => new Error(message));
         })
       );
   }

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subscription-platform
+  labels:
+    app: subscription-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: subscription-platform
+  template:
+    metadata:
+      labels:
+        app: subscription-platform
+    spec:
+      containers:
+        - name: subscription-platform
+          image: hamoudaakriche/subscription-platform:latest
+          imagePullPolicy: IfNotPresent 
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              # REMPLACE L'URL CI-DESSOUS PAR CELLE DE TON SERVEUR AZURE
+              value: "jdbc:postgresql://pfe-db-hamouda.postgres.database.azure.com:5432/fwa_db?sslmode=require"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
