@@ -13,20 +13,26 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            // 1. On active explicitement la configuration CORS gérée par le bean corsConfigurationSource()
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            // On désactive CSRF si tu utilises des JWT (très classique)
-            .csrf(csrf -> csrf.disable()) 
-            .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll() // Ou tes règles de sécurité habituelles
-            );
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+        // 1. Appliquer CORS
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        // 2. Désactiver CSRF (indispensable pour les APIs REST/JWT)
+        .csrf(csrf -> csrf.disable()) 
+        // 3. Définir les autorisations d'accès aux routes
+        .authorizeHttpRequests(auth -> auth
+            // AUTORISE tout le monde à accéder aux endpoints d'authentification !
+            .requestMatchers("/api/**").permitAll() 
+            // Si tu as d'autres endpoints publics (ex: enregistrement, public-info), ajoute-les ici :
+            // .requestMatchers("/api/public/**").permitAll()
             
-        return http.build();
-    }
+            // Tout le reste nécessite d'être connecté
+            .anyRequest().authenticated() 
+        );
+        
+    return http.build();
+}
 
     // 2. C'est CE Bean qui va dicter les règles CORS à tout Spring Security ET Spring MVC
     @Bean
