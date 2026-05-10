@@ -17,7 +17,7 @@ spec:
       containers:
         - name: subscription-platform
           image: hamoudaakriche/subscription-platform:latest
-          imagePullPolicy: IfNotPresent 
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:

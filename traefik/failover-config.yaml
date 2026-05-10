@@ -1,0 +1,45 @@
+# A. Le Service interne dans AKS
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloud-prive-service
+  namespace: default
+spec:
+  ports:
+    - protocol: TCP
+      port: 80         # Le port virtuel dans AKS
+      targetPort: 30080 # Le port réel de ta VM locale
+
+---
+# B. Les Endpoints (Lien vers l'IP fixe de ta VM)
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: cloud-prive-service
+  namespace: default
+subsets:
+  - addresses:
+      - ip: 197.3.69.200 # L'IP fixe de ta VM locale
+    ports:
+      - port: 30080
+
+---
+# C. L'IngressRoute de secours (On gère le routage ici directement)
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingress-principal
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`fwasubscription.myvnc.com`)
+      kind: Rule
+      # Traefik va essayer de joindre le premier service. 
+      # S'il ne répond pas (erreur réseau ou timeout), il passe automatiquement au suivant !
+      services:
+        - name: cloud-prive-service # Priorité 1 : Ta VM Locale
+          port: 80
+        - name: fwa-subscription-ui  # Priorité 2 (Fallback) : Ton frontend AKS
+          port: 80
