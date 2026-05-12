@@ -1,4 +1,4 @@
-# A. Le Service interne dans AKS
+# 1. Le Service interne dans AKS (Pointe vers les Endpoints de ta VM locale)
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,7 +11,7 @@ spec:
       targetPort: 30080 # Le port réel de ta VM locale
 
 ---
-# B. Les Endpoints (Lien vers l'IP fixe de ta VM)
+# 2. Les Endpoints (Lien vers l'IP fixe de ta VM)
 apiVersion: v1
 kind: Endpoints
 metadata:
@@ -24,7 +24,7 @@ subsets:
       - port: 30080
 
 ---
-# C. L'IngressRoute de secours (On gère le routage ici directement)
+# 3. L'IngressRoute Principal (Il pointe vers le répartiteur Traefik)
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -36,10 +36,28 @@ spec:
   routes:
     - match: Host(`fwasubscription.myvnc.com`)
       kind: Rule
-      # Traefik va essayer de joindre le premier service. 
-      # S'il ne répond pas (erreur réseau ou timeout), il passe automatiquement au suivant !
       services:
-        - name: cloud-prive-service # Priorité 1 : Ta VM Locale
-          port: 80
-        - name: fwa-subscription-ui  # Priorité 2 (Fallback) : Ton frontend AKS
-          port: 80
+        # On ne pointe plus directement vers les services, mais vers le gestionnaire de répartition ci-dessous
+        - name: pfe-loadbalancer-service
+          kind: TraefikService
+
+---
+# 4. Le Répartiteur de charge Traefik (Gestion du Load Balancing + Sticky Sessions)
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: pfe-loadbalancer-service
+  namespace: default
+spec:
+  # C'est cette option qui va empêcher le bug 403 en te laissant sur le cloud où tu t'es connecté !
+  sticky:
+    cookie:
+      name: pfe_sticky_session
+  weighted:
+    services:
+      - name: cloud-prive-service        # Cloud Privé (VM)
+        port: 80
+        weight: 1                        # Poids équivalent (50% de la charge)
+      - name: fwa-subscription-ui        # Cloud Public (Azure AKS)
+        port: 80
+        weight: 1                        # Poids équivalent (50% de la charge)
