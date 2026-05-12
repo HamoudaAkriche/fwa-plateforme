@@ -41,9 +41,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         
         // Autorise explicitement ton origine No-IP et localhost
         config.setAllowedOriginPatterns(List.of(
-            "http://localhost:*",
-            "http://fwasubscription.myvnc.com*",
-            "http://41.62.239.89*"
+            "*"
         ));
         
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
