@@ -3,6 +3,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -22,13 +23,12 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         .csrf(csrf -> csrf.disable()) 
         // 3. Définir les autorisations d'accès aux routes
         .authorizeHttpRequests(auth -> auth
-            // AUTORISE tout le monde à accéder aux endpoints d'authentification !
-            .requestMatchers("/api/**").permitAll() 
-            // Si tu as d'autres endpoints publics (ex: enregistrement, public-info), ajoute-les ici :
-            // .requestMatchers("/api/public/**").permitAll()
-            
-            // Tout le reste nécessite d'être connecté
-            .anyRequest().authenticated() 
+            // Allow CORS preflight requests
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            // Allow unauthenticated access to API endpoints (adjust if you want stricter rules)
+            .requestMatchers("/api/**").permitAll()
+            // Everything else requires authentication
+            .anyRequest().authenticated()
         );
         
     return http.build();
