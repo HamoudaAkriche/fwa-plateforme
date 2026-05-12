@@ -43,7 +43,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         config.setAllowedOriginPatterns(List.of(
             "http://localhost:30080",
             "http://fwasubscription.myvnc.com",
-            "http://197.3.69.200:30080"
+            "http://41.62.239.89:30080"
         ));
         
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));

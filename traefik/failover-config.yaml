@@ -37,27 +37,26 @@ spec:
     - match: Host(`fwasubscription.myvnc.com`)
       kind: Rule
       services:
-        # On ne pointe plus directement vers les services, mais vers le gestionnaire de répartition ci-dessous
         - name: pfe-loadbalancer-service
           kind: TraefikService
 
 ---
-# 4. Le Répartiteur de charge Traefik (Gestion du Load Balancing + Sticky Sessions)
+# 4. Le Répartiteur de charge Traefik (Correction de la syntaxe Sticky Session)
 apiVersion: traefik.io/v1alpha1
 kind: TraefikService
 metadata:
   name: pfe-loadbalancer-service
   namespace: default
 spec:
-  # C'est cette option qui va empêcher le bug 403 en te laissant sur le cloud où tu t'es connecté !
-  sticky:
-    cookie:
-      name: pfe_sticky_session
   weighted:
+    # La syntaxe correcte pour Traefik v3 se place ici :
+    sticky:
+      cookie:
+        name: pfe_sticky_session
     services:
       - name: cloud-prive-service        # Cloud Privé (VM)
         port: 80
-        weight: 1                        # Poids équivalent (50% de la charge)
+        weight: 1                        
       - name: fwa-subscription-ui        # Cloud Public (Azure AKS)
         port: 80
-        weight: 1                        # Poids équivalent (50% de la charge)
+        weight: 1
