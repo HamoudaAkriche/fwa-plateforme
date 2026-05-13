@@ -19,7 +19,7 @@ metadata:
   namespace: default
 subsets:
   - addresses:
-      - ip: 41.62.239.89 # L'IP fixe de ta VM locale
+      - ip: 102.157.146.237 # L'IP fixe de ta VM locale
     ports:
       - port: 30080
 

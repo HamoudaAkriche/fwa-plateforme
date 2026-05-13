@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -15,7 +16,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 public class SecurityConfig {
 @Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
     http
         // 1. Appliquer CORS
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -25,11 +26,17 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         .authorizeHttpRequests(auth -> auth
             // Allow CORS preflight requests
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-            // Allow unauthenticated access to API endpoints (adjust if you want stricter rules)
-            .requestMatchers("/api/**").permitAll()
+            // Allow unauthenticated access to authentication endpoints
+            .requestMatchers("/api/auth/**").permitAll()
+            // Admin endpoints require SUPER_ADMIN role
+            .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
+            // All other API endpoints require authentication
+            .requestMatchers("/api/**").authenticated()
             // Everything else requires authentication
             .anyRequest().authenticated()
-        );
+        )
+        // Register the JWT authentication filter so it populates SecurityContext
+        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         
     return http.build();
 }

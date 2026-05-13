@@ -115,10 +115,11 @@ public class SubscriptionController {
         sub.setStatus(SubscriptionStatus.SUSPENDED);
         Subscription saved = repository.save(sub);
 
+        String actor = (principal == null) ? "anonymous" : principal.getName();
         historyRepository.save(new SubscriptionHistory(
             id,
             "SUSPEND",
-            principal.getName()
+            actor
         ));
 
         return saved;
@@ -131,10 +132,11 @@ public class SubscriptionController {
         sub.setStatus(SubscriptionStatus.TERMINATED);
         Subscription saved = repository.save(sub);
 
+        String actor = (principal == null) ? "anonymous" : principal.getName();
         historyRepository.save(new SubscriptionHistory(
             id,
             "TERMINATE",
-            principal.getName()
+            actor
         ));
 
         return saved;
@@ -144,10 +146,11 @@ public class SubscriptionController {
 
         repository.deleteById(id);
 
+        String actor = (principal == null) ? "anonymous" : principal.getName();
         historyRepository.save(new SubscriptionHistory(
             id,
             "DELETE",
-            principal.getName()
+            actor
         ));
     }
     @GetMapping("/{id}/history")
