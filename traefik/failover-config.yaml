@@ -1,4 +1,4 @@
-# 1. Le Service interne dans AKS (Pointe vers les Endpoints de ta VM locale)
+# 1. Service pour la VM Locale (Cloud Privé)
 apiVersion: v1
 kind: Service
 metadata:
@@ -7,11 +7,11 @@ metadata:
 spec:
   ports:
     - protocol: TCP
-      port: 80         # Le port virtuel dans AKS
-      targetPort: 30080 # Le port réel de ta VM locale
+      port: 80
+      targetPort: 30080
 
 ---
-# 2. Les Endpoints (Lien vers l'IP fixe de ta VM)
+# 2. Endpoints avec ton IP (102.157.146.237)
 apiVersion: v1
 kind: Endpoints
 metadata:
@@ -19,12 +19,24 @@ metadata:
   namespace: default
 subsets:
   - addresses:
-      - ip: 102.157.146.237 # L'IP fixe de ta VM locale
+      - ip: 102.157.146.237
     ports:
       - port: 30080
 
 ---
-# 3. L'IngressRoute Principal (Il pointe vers le répartiteur Traefik)
+# 3. ServersTransport pour accélérer l'abandon si la VM privée ne répond pas
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: pfe-fast-timeout
+  namespace: default
+spec:
+  forwardingTimeouts:
+    dialTimeout: 1s      # Si la VM ne répond pas au ping TCP en 1s, elle est considérée HS
+    responseHeaderTimeout: 2s  # Si le backend met plus de 2s à répondre, on bascule
+
+---
+# 4. L'IngressRoute Principal
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -37,26 +49,28 @@ spec:
     - match: Host(`fwasubscription.myvnc.com`)
       kind: Rule
       services:
-        - name: pfe-loadbalancer-service
+        - name: pfe-failover
           kind: TraefikService
 
 ---
-# 4. Le Répartiteur de charge Traefik (Correction de la syntaxe Sticky Session)
+# 5. Le TraefikService de failover
 apiVersion: traefik.io/v1alpha1
 kind: TraefikService
 metadata:
-  name: pfe-loadbalancer-service
+  name: pfe-failover
   namespace: default
 spec:
-  weighted:
-    # La syntaxe correcte pour Traefik v3 se place ici :
-    sticky:
-      cookie:
-        name: pfe_sticky_session
-    services:
-      - name: cloud-prive-service        # Cloud Privé (VM)
-        port: 80
-        weight: 1                        
-      - name: fwa-subscription-ui        # Cloud Public (Azure AKS)
-        port: 80
-        weight: 1
+  failover:
+    service:
+      name: cloud-prive-service
+      kind: Service
+      port: 80
+      serversTransport: pfe-fast-timeout
+    fallback:
+      name: fwa-subscription-ui
+      kind: Service
+      port: 80
+    errors:
+      status:
+        - "500-504"
+        - "429"
