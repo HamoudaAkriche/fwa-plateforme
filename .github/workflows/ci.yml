@@ -2,13 +2,13 @@ name: CI - Test, Build and Push Docker Images
 
 on:
   pull_request:
-    branches: ["main"]
+    branches: ["main", "master"]
     paths:
       - "fwa-subscription-ui/**"
       - "subscription-platform/**"
       - ".github/workflows/ci.yml"
   push:
-    branches: ["main"]
+    branches: ["main", "master"]
     paths:
       - "fwa-subscription-ui/**"
       - "subscription-platform/**"
