@@ -44,7 +44,7 @@ jobs:
           cache: maven
 
       - name: Grant execute permission to Maven wrapper
-        run: chmod +x mvnw
+        run: chmod +x subscription-platform/mvnw
 
       - name: Run backend tests
         run: ./mvnw -e -DtrimStackTrace=false test
@@ -97,7 +97,7 @@ jobs:
           cache: maven
 
       - name: Grant execute permission to Maven wrapper
-        run: chmod +x mvnw
+        run: chmod +x subscription-platform/mvnw
 
       - name: Package backend
         working-directory: subscription-platform
