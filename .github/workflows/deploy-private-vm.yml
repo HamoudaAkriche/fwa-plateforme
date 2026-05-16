@@ -48,7 +48,7 @@ jobs:
             echo "Logging into Docker Hub"
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
           fi
-          kubectl set image deployment/subscription-platform subscription-platform=hamoudaakriche/subscription-platform:${IMAGE_TAG}
-          kubectl rollout status deployment/subscription-platform --timeout=180s
-          kubectl set image deployment/fwa-subscription-ui fwa-subscription-ui=hamoudaakriche/fwa-subscription-ui:${IMAGE_TAG}
-          kubectl rollout status deployment/fwa-subscription-ui --timeout=180s
+          sudo kubectl set image deployment/subscription-platform subscription-platform=hamoudaakriche/subscription-platform:${IMAGE_TAG}
+          sudo kubectl rollout status deployment/subscription-platform --timeout=180s
+          sudo kubectl set image deployment/fwa-subscription-ui fwa-subscription-ui=hamoudaakriche/fwa-subscription-ui:${IMAGE_TAG}
+          sudo kubectl rollout status deployment/fwa-subscription-ui --timeout=180s
