@@ -1,0 +1,57 @@
+name: CD - Deploy to Private VM
+
+on:
+  workflow_run:
+    workflows: ["CI - Test, Build and Push Docker Images"]
+    types:
+      - completed
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Docker image tag to deploy. Leave empty to use the commit SHA.
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Resolve image tag
+        shell: bash
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${{ inputs.image_tag }}" ]; then
+            echo "IMAGE_TAG=${{ inputs.image_tag }}" >> "$GITHUB_ENV"
+          elif [ -n "${{ github.event.workflow_run.head_sha }}" ]; then
+            echo "IMAGE_TAG=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_ENV"
+          else
+            echo "IMAGE_TAG=${GITHUB_SHA}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Deploy backend and frontend on the VM
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          password: ${{ secrets.VM_PASSWORD }}
+          port: 22
+          envs: IMAGE_TAG
+          script_stop: true
+          script: |
+            set -e
+            echo "Deploying image tag: ${IMAGE_TAG}"
+            kubectl set image deployment/subscription-platform subscription-platform=hamoudaakriche/subscription-platform:${IMAGE_TAG}
+            kubectl rollout status deployment/subscription-platform --timeout=180s
+            kubectl set image deployment/fwa-subscription-ui fwa-subscription-ui=hamoudaakriche/fwa-subscription-ui:${IMAGE_TAG}
+            kubectl rollout status deployment/fwa-subscription-ui --timeout=180s
