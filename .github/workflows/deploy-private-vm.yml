@@ -43,11 +43,6 @@ jobs:
         run: |
           set -euo pipefail
           echo "Deploying image tag: ${IMAGE_TAG}"
-          # If images are private, login first
-          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-            echo "Logging into Docker Hub"
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-          fi
           sudo kubectl set image deployment/subscription-platform subscription-platform=hamoudaakriche/subscription-platform:${IMAGE_TAG}
           sudo kubectl rollout status deployment/subscription-platform --timeout=180s
           sudo kubectl set image deployment/fwa-subscription-ui fwa-subscription-ui=hamoudaakriche/fwa-subscription-ui:${IMAGE_TAG}
