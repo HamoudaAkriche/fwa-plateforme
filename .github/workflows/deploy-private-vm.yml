@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout code
@@ -37,21 +37,18 @@ jobs:
             echo "IMAGE_TAG=${GITHUB_SHA}" >> "$GITHUB_ENV"
           fi
 
-      - name: Deploy backend and frontend on the VM
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy backend and frontend (runs on self-hosted runner)
         env:
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
-        with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USERNAME }}
-          password: ${{ secrets.VM_PASSWORD }}
-          port: 22
-          envs: IMAGE_TAG
-          script_stop: true
-          script: |
-            set -e
-            echo "Deploying image tag: ${IMAGE_TAG}"
-            kubectl set image deployment/subscription-platform subscription-platform=hamoudaakriche/subscription-platform:${IMAGE_TAG}
-            kubectl rollout status deployment/subscription-platform --timeout=180s
-            kubectl set image deployment/fwa-subscription-ui fwa-subscription-ui=hamoudaakriche/fwa-subscription-ui:${IMAGE_TAG}
-            kubectl rollout status deployment/fwa-subscription-ui --timeout=180s
+        run: |
+          set -euo pipefail
+          echo "Deploying image tag: ${IMAGE_TAG}"
+          # If images are private, login first
+          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "Logging into Docker Hub"
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+          fi
+          kubectl set image deployment/subscription-platform subscription-platform=hamoudaakriche/subscription-platform:${IMAGE_TAG}
+          kubectl rollout status deployment/subscription-platform --timeout=180s
+          kubectl set image deployment/fwa-subscription-ui fwa-subscription-ui=hamoudaakriche/fwa-subscription-ui:${IMAGE_TAG}
+          kubectl rollout status deployment/fwa-subscription-ui --timeout=180s
