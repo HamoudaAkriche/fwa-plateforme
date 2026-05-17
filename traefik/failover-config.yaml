@@ -11,7 +11,7 @@ spec:
       targetPort: 30080
 
 ---
-# 2. Endpoints avec ton IP (197.0.139.190)
+# 2. Endpoints avec ton IP (197.3.213.147)
 apiVersion: v1
 kind: Endpoints
 metadata:
@@ -19,7 +19,7 @@ metadata:
   namespace: default
 subsets:
   - addresses:
-      - ip: 197.0.139.190
+      - ip: 197.3.213.147
     ports:
       - port: 30080
 
