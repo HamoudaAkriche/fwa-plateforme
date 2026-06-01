@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/subscriptions")
@@ -24,12 +26,15 @@ public class SubscriptionController {
 
     private final SubscriptionRepository repository;
     private final SubscriptionHistoryRepository historyRepository;
+    private final SubscriptionCommentRepository commentRepository;
 
     public SubscriptionController(SubscriptionRepository repository,
-                              SubscriptionHistoryRepository historyRepository) {
-    this.repository = repository;
-    this.historyRepository = historyRepository;
-}
+                              SubscriptionHistoryRepository historyRepository,
+                              SubscriptionCommentRepository commentRepository) {
+        this.repository = repository;
+        this.historyRepository = historyRepository;
+        this.commentRepository = commentRepository;
+    }
 
     @PostMapping
     public Subscription create(@RequestBody Subscription subscription, Principal principal) {
@@ -156,5 +161,27 @@ public class SubscriptionController {
     @GetMapping("/{id}/history")
     public List<SubscriptionHistory> history(@PathVariable Long id) {
         return historyRepository.findBySubscriptionIdOrderByActionDateDesc(id);
+    }
+
+    public record CreateCommentRequest(String content) {}
+
+    @GetMapping("/{id}/comments")
+    public List<SubscriptionComment> comments(@PathVariable Long id) {
+        return commentRepository.findBySubscriptionIdOrderByCreatedAtDesc(id);
+    }
+
+    @PostMapping("/{id}/comments")
+    public SubscriptionComment addComment(@PathVariable Long id, @RequestBody CreateCommentRequest request, Principal principal) {
+        if (!repository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found");
+        }
+
+        if (request == null || request.content() == null || request.content().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Comment content is required");
+        }
+
+        String author = principal == null ? "anonymous" : principal.getName();
+        SubscriptionComment comment = new SubscriptionComment(id, request.content().trim(), author);
+        return commentRepository.save(comment);
     }
 }

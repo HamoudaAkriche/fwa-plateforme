@@ -3,8 +3,8 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Subscriptions</h2>
     <div class="d-flex gap-2">
-      <button *ngIf="isSuperAdmin" type="button" class="btn btn-outline-primary" (click)="openAdminAgentPage()">
-        Manage agents
+      <button *ngIf="isSuperAdmin" type="button" class="btn btn-outline-primary" (click)="openAdminAccountsPage()">
+        Manage accounts
       </button>
       <button type="button" class="btn btn-outline-danger" (click)="logout()">Logout</button>
     </div>
@@ -221,6 +221,11 @@
                       [disabled]="isRowBusy(s.id)">
                     {{ deletingInProgressId === s.id ? 'Deleting...' : 'Delete' }}
                   </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                      (click)="showComments(s.id)"
+                      [disabled]="isRowBusy(s.id)">
+                    Comment
+                  </button>
                     <button type="button" class="btn btn-sm btn-outline-primary" 
                       (click)="showHistory(s.id)"
                       [disabled]="isRowBusy(s.id)">
@@ -287,5 +292,47 @@
     </div>
   </div>
 </div>
+
+  <div class="card mt-4" *ngIf="commentsForId !== null">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div class="fw-bold">Comments for Subscription #{{ commentsForId }}</div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeComments()">Close</button>
+    </div>
+
+    <div class="card-body">
+      <div class="mb-3">
+        <label class="form-label">New comment</label>
+        <textarea
+          class="form-control"
+          rows="3"
+          [(ngModel)]="newComment"
+          placeholder="Explain the issue or add an internal note"></textarea>
+      </div>
+      <button type="button" class="btn btn-primary mb-3" (click)="addComment()" [disabled]="commentSubmittingForId === commentsForId">
+        {{ commentSubmittingForId === commentsForId ? 'Saving...' : 'Add comment' }}
+      </button>
+
+      <div class="p-3 text-muted" *ngIf="comments.length === 0">No comments.</div>
+
+      <div class="table-responsive" *ngIf="comments.length > 0">
+        <table class="table table-striped align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Comment</th>
+              <th>Author</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of comments">
+              <td style="white-space: pre-wrap;">{{ c.content }}</td>
+              <td>{{ c.createdBy }}</td>
+              <td>{{ formatDateTime(c.createdAt) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
 </div>

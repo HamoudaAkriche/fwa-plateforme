@@ -17,6 +17,11 @@ export const routes: Routes = [
     canActivate: [superAdminGuard],
     loadComponent: () => import('./pages/admin-agents/admin-agents').then(m => m.AdminAgents),
   },
+  {
+    path: 'admin/accounts',
+    canActivate: [superAdminGuard],
+    loadComponent: () => import('./pages/admin-agents/admin-agents').then(m => m.AdminAgents),
+  },
   { path: '', redirectTo: 'subscriptions', pathMatch: 'full' },
   { path: '**', redirectTo: 'subscriptions' }
 ];

@@ -1,11 +1,11 @@
 <div class="container py-4" style="max-width: 680px;">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Super Admin - Create Agent</h2>
+    <h2 class="mb-0">Super Admin - Manage Accounts</h2>
     <button type="button" class="btn btn-outline-secondary" (click)="backToSubscriptions()">Back</button>
   </div>
 
   <div class="card">
-    <div class="card-header fw-bold">New agent account</div>
+    <div class="card-header fw-bold">New account</div>
     <div class="card-body">
       <div class="mb-3">
         <label class="form-label">Username</label>
@@ -22,12 +22,61 @@
           [disabled]="loading" />
       </div>
 
-      <button type="button" class="btn btn-primary" (click)="createAgent()" [disabled]="loading">
-        {{ loading ? 'Creating...' : 'Create agent' }}
+      <div class="mb-3">
+        <label class="form-label">Role</label>
+        <select class="form-select" [(ngModel)]="role" [disabled]="loading">
+          <option value="AGENT">AGENT</option>
+          <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+        </select>
+      </div>
+
+      <button type="button" class="btn btn-primary" (click)="createAccount()" [disabled]="loading">
+        {{ loading ? 'Creating...' : 'Create account' }}
       </button>
 
       <div class="alert alert-danger mt-3 mb-0" *ngIf="error">{{ error }}</div>
       <div class="alert alert-success mt-3 mb-0" *ngIf="success">{{ success }}</div>
+    </div>
+  </div>
+
+  <div class="card mt-4">
+    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+      <span>Existing accounts</span>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="loadUsers()" [disabled]="loadingUsers">
+        {{ loadingUsers ? 'Refreshing...' : 'Refresh' }}
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <div class="p-3 text-muted" *ngIf="loadingUsers">Loading accounts...</div>
+      <div class="p-3 text-muted" *ngIf="!loadingUsers && users.length === 0">No accounts.</div>
+      <div class="table-responsive" *ngIf="users.length > 0">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>Role</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users">
+              <td>{{ user.id }}</td>
+              <td>{{ user.username }}</td>
+              <td><span class="badge text-bg-secondary">{{ user.role }}</span></td>
+              <td class="text-end">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  (click)="deleteUser(user)"
+                  [disabled]="deletingUserId === user.id">
+                  {{ deletingUserId === user.id ? 'Deleting...' : 'Delete' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

@@ -34,6 +34,14 @@ type SubscriptionHistory = {
   actionDate: string;
 };
 
+type SubscriptionComment = {
+  id: number;
+  subscriptionId: number;
+  content: string;
+  createdBy: string;
+  createdAt: string;
+};
+
 type SubscriptionStats = {
   totalSubscriptions: number;
   active: number;
@@ -83,6 +91,10 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
   positionCoordinatesText = '';
   history: SubscriptionHistory[] = [];
   historyForId: number | null = null;
+  comments: SubscriptionComment[] = [];
+  commentsForId: number | null = null;
+  newComment = '';
+  commentSubmittingForId: number | null = null;
   stats: SubscriptionStats = {
     totalSubscriptions: 0,
     active: 0,
@@ -343,6 +355,9 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
   showHistory(id: number) {
     this.error = '';
     this.historyForId = id;
+    this.commentsForId = null;
+    this.comments = [];
+    this.newComment = '';
 
     this.http.get<SubscriptionHistory[]>(`${this.apiUrl}/${id}/history`).subscribe({
       next: (data) => this.history = Array.isArray(data) ? data : [],
@@ -356,6 +371,56 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
   closeHistory() {
     this.historyForId = null;
     this.history = [];
+  }
+
+  showComments(id: number) {
+    this.error = '';
+    this.commentsForId = id;
+    this.historyForId = null;
+    this.history = [];
+    this.newComment = '';
+
+    this.http.get<SubscriptionComment[]>(`${this.apiUrl}/${id}/comments`).subscribe({
+      next: (data) => this.comments = Array.isArray(data) ? data : [],
+      error: () => {
+        this.error = 'Erreur chargement commentaires';
+        this.comments = [];
+      }
+    });
+  }
+
+  closeComments() {
+    this.commentsForId = null;
+    this.comments = [];
+    this.newComment = '';
+  }
+
+  addComment() {
+    if (this.commentsForId === null || this.commentSubmittingForId !== null) {
+      return;
+    }
+
+    const content = this.newComment.trim();
+    if (!content) {
+      this.error = 'Le commentaire est obligatoire.';
+      return;
+    }
+
+    this.error = '';
+    this.commentSubmittingForId = this.commentsForId;
+
+    this.http.post<SubscriptionComment>(`${this.apiUrl}/${this.commentsForId}/comments`, { content }).subscribe({
+      next: () => {
+        this.newComment = '';
+        this.showComments(this.commentsForId as number);
+      },
+      error: () => {
+        this.error = 'Erreur lors de l\'ajout du commentaire';
+      },
+      complete: () => {
+        this.commentSubmittingForId = null;
+      }
+    });
   }
 
   search() {
@@ -472,8 +537,8 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
     this.router.navigateByUrl('/login');
   }
 
-  openAdminAgentPage() {
-    this.router.navigateByUrl('/admin/agents');
+  openAdminAccountsPage() {
+    this.router.navigateByUrl('/admin/accounts');
   }
 
   isRowBusy(id: number): boolean {
