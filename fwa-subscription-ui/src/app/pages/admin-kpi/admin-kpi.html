@@ -1,0 +1,58 @@
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="mb-0">Super Admin KPI</h2>
+      <div class="text-muted small">Dedicated dashboard for super admins only.</div>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-outline-primary" (click)="goToAccounts()">Manage accounts</button>
+      <button type="button" class="btn btn-outline-secondary" (click)="goToSubscriptions()">Subscriptions</button>
+    </div>
+  </div>
+
+  <div class="alert alert-danger" *ngIf="error">{{ error }}</div>
+  <div class="alert alert-info" *ngIf="loading">Loading KPIs...</div>
+
+  <div class="row g-3" *ngIf="!loading">
+    <div class="col-6 col-lg-2-4">
+      <div class="card stat-card stat-total h-100">
+        <div class="card-body">
+          <div class="stat-label">Total subscriptions</div>
+          <div class="stat-value">{{ kpis.totalSubscriptions }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-2-4">
+      <div class="card stat-card stat-active h-100">
+        <div class="card-body">
+          <div class="stat-label">Active</div>
+          <div class="stat-value">{{ kpis.active }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-2-4">
+      <div class="card stat-card stat-suspended h-100">
+        <div class="card-body">
+          <div class="stat-label">Suspended</div>
+          <div class="stat-value">{{ kpis.suspended }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-2-4">
+      <div class="card stat-card stat-terminated h-100">
+        <div class="card-body">
+          <div class="stat-label">Terminated</div>
+          <div class="stat-value">{{ kpis.terminated }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-2-4">
+      <div class="card stat-card stat-today h-100">
+        <div class="card-body">
+          <div class="stat-label">Created today</div>
+          <div class="stat-value">{{ kpis.createdToday }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

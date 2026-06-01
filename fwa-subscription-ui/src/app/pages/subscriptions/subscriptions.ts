@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -50,6 +50,12 @@ type SubscriptionStats = {
   createdToday: number;
 };
 
+type ImportResponse = {
+  imported: number;
+  skipped: number;
+  errors: string[];
+};
+
 @Component({
   selector: 'app-subscriptions',
   standalone: true,
@@ -95,6 +101,11 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
   commentsForId: number | null = null;
   newComment = '';
   commentSubmittingForId: number | null = null;
+  importing = false;
+  importSuccess = '';
+  importError = '';
+  importErrors: string[] = [];
+  selectedImportFileName = '';
   stats: SubscriptionStats = {
     totalSubscriptions: 0,
     active: 0,
@@ -110,6 +121,8 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
     minute: '2-digit',
     second: '2-digit',
   });
+
+  @ViewChild('importFileInput') importFileInput?: ElementRef<HTMLInputElement>;
 
   get isSuperAdmin(): boolean {
     return this.auth.isSuperAdmin();
@@ -539,6 +552,59 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
 
   openAdminAccountsPage() {
     this.router.navigateByUrl('/admin/accounts');
+  }
+
+  openAdminKpiPage() {
+    this.router.navigateByUrl('/admin/kpi');
+  }
+
+  onImportFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0] ?? null;
+
+    this.selectedImportFileName = file?.name ?? '';
+    this.importErrors = [];
+    this.importError = '';
+    this.importSuccess = '';
+  }
+
+  importSubscriptions() {
+    const file = this.importFileInput?.nativeElement.files?.[0];
+    if (!file || this.importing) {
+      this.importError = 'Choisis un fichier CSV ou Excel avant d importer.';
+      return;
+    }
+
+    this.importing = true;
+    this.importError = '';
+    this.importSuccess = '';
+    this.importErrors = [];
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    this.http.post<ImportResponse>(`${getApiBaseUrl()}/admin/subscriptions/import`, formData).subscribe({
+      next: (result) => {
+        const imported = result?.imported ?? 0;
+        const skipped = result?.skipped ?? 0;
+        this.importSuccess = `Import termine: ${imported} abonnement(s) importe(s), ${skipped} ignore(s).`;
+        this.importErrors = Array.isArray(result?.errors) ? result.errors : [];
+        this.selectedImportFileName = '';
+        if (this.importFileInput?.nativeElement) {
+          this.importFileInput.nativeElement.value = '';
+        }
+        this.page = 0;
+        this.loadStats();
+        this.load();
+      },
+      error: (err) => {
+        this.importError = err?.error?.message ?? 'Import impossible';
+        this.importing = false;
+      },
+      complete: () => {
+        this.importing = false;
+      }
+    });
   }
 
   isRowBusy(id: number): boolean {
