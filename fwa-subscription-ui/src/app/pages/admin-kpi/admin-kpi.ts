@@ -14,6 +14,16 @@ type AdminKpiResponse = {
   createdToday: number;
 };
 
+type User = { id: number; username: string; role: string };
+
+type UserKpiResponse = {
+  username: string;
+  commentsCount: number;
+  totalActions: number;
+  creates: number;
+  actionsToday: number;
+};
+
 @Component({
   selector: 'app-admin-kpi',
   standalone: true,
@@ -34,10 +44,15 @@ export class AdminKpi {
     createdToday: 0,
   };
 
+  users: User[] = [];
+  selectedUser: User | null = null;
+  userKpis: UserKpiResponse | null = null;
+
   constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit() {
     this.loadKpis();
+    this.loadUsers();
   }
 
   loadKpis() {
@@ -59,6 +74,32 @@ export class AdminKpi {
         error: (err) => {
           this.error = err?.error?.message ?? 'Loading KPIs failed';
         }
+      });
+  }
+
+  loadUsers() {
+    const url = `${getApiBaseUrl()}/admin/users`;
+    this.http.get<User[]>(url).subscribe({
+      next: (data) => this.users = data ?? [],
+      error: (err) => console.error('Unable to load users for KPI page', err)
+    });
+  }
+
+  selectUser(user: User | null) {
+    this.selectedUser = user;
+    this.userKpis = null;
+
+    if (!user) {
+      return;
+    }
+
+    const url = `${getApiBaseUrl()}/admin/dashboard/kpis/${encodeURIComponent(user.username)}`;
+    this.loading = true;
+    this.http.get<UserKpiResponse>(url)
+      .pipe(finalize(() => { this.loading = false; }))
+      .subscribe({
+        next: (data) => this.userKpis = data ?? null,
+        error: (err) => this.error = err?.error?.message ?? 'Unable to load user KPIs'
       });
   }
 

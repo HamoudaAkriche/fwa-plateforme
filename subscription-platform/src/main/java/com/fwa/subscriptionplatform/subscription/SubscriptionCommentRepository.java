@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface SubscriptionCommentRepository extends JpaRepository<SubscriptionComment, Long> {
 
     List<SubscriptionComment> findBySubscriptionIdOrderByCreatedAtDesc(Long subscriptionId);
+    long countByCreatedBy(String createdBy);
 }
