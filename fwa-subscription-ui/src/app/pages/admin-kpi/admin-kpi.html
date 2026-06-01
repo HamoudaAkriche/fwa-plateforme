@@ -15,7 +15,7 @@
     <span>Loading KPIs...</span>
     <button type="button" class="btn btn-sm btn-outline-secondary" (click)="retryLoad()">Retry</button>
   </div>
-  <div class="row g-3" *ngIf="!loading">
+  <div class="row g-3">
     <div class="col-12 col-lg-3">
       <div class="card mb-3">
         <div class="card-body">
@@ -76,7 +76,7 @@
 
       <div *ngIf="selectedUser && userKpis" class="card mt-3">
         <div class="card-body">
-          <h5>KPI pour: {{ selectedUser.username }}</h5>
+          <h5>KPI pour: {{ selectedUser.username }} <span class="text-muted small">({{ selectedUser.role }})</span></h5>
           <div class="row">
             <div class="col-6 col-md-3">
               <div class="small text-muted">Comments</div>

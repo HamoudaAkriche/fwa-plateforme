@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, PLATFORM_ID, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { isPlatformBrowser } from '@angular/common';
 import { of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { finalize } from 'rxjs/operators';
@@ -36,6 +37,7 @@ type UserKpiResponse = {
 export class AdminKpi {
   private readonly apiUrl = `${getApiBaseUrl()}/admin/dashboard/kpis`;
   private readonly usersUrl = `${getApiBaseUrl()}/admin/users`;
+  private readonly platformId = inject(PLATFORM_ID);
 
   loadingGlobal = false;
   loadingUser = false;
@@ -59,6 +61,10 @@ export class AdminKpi {
   }
 
   ngOnInit() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     this.loadKpis();
     this.loadUsers();
   }
@@ -106,7 +112,13 @@ export class AdminKpi {
         })
       )
       .subscribe({
-      next: (data) => this.users = data ?? [],
+      next: (data) => {
+        this.users = data ?? [];
+
+        if (!this.selectedUser && this.users.length > 0) {
+          this.selectUser(this.users[0]);
+        }
+      },
     });
   }
 
