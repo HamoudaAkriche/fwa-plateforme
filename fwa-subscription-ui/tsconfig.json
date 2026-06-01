@@ -4,6 +4,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "forceConsistentCasingInFileNames": true,
+    "ignoreDeprecations": "5.0",
     "moduleResolution": "bundler",
     "strict": true,
     "noImplicitOverride": true,

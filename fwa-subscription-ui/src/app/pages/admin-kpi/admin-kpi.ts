@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { of } from 'rxjs';
+import { catchError, timeout } from 'rxjs/operators';
 import { finalize } from 'rxjs/operators';
 
 import { getApiBaseUrl } from '../../services/api-base';
@@ -33,8 +35,10 @@ type UserKpiResponse = {
 })
 export class AdminKpi {
   private readonly apiUrl = `${getApiBaseUrl()}/admin/dashboard/kpis`;
+  private readonly usersUrl = `${getApiBaseUrl()}/admin/users`;
 
-  loading = false;
+  loadingGlobal = false;
+  loadingUser = false;
   error = '';
   kpis: AdminKpiResponse = {
     totalSubscriptions: 0,
@@ -50,17 +54,34 @@ export class AdminKpi {
 
   constructor(private http: HttpClient, private router: Router) {}
 
+  get loading(): boolean {
+    return this.loadingGlobal || this.loadingUser;
+  }
+
   ngOnInit() {
     this.loadKpis();
     this.loadUsers();
   }
 
   loadKpis() {
-    this.loading = true;
+    this.loadingGlobal = true;
     this.error = '';
 
     this.http.get<AdminKpiResponse>(this.apiUrl)
-      .pipe(finalize(() => { this.loading = false; }))
+      .pipe(
+        timeout(10000),
+        catchError((err) => {
+          this.error = err?.error?.message ?? 'Loading KPIs failed (timeout/API unreachable)';
+          return of({
+            totalSubscriptions: 0,
+            active: 0,
+            suspended: 0,
+            terminated: 0,
+            createdToday: 0,
+          } as AdminKpiResponse);
+        }),
+        finalize(() => { this.loadingGlobal = false; })
+      )
       .subscribe({
         next: (data) => {
           this.kpis = {
@@ -70,18 +91,22 @@ export class AdminKpi {
             terminated: data?.terminated ?? 0,
             createdToday: data?.createdToday ?? 0,
           };
-        },
-        error: (err) => {
-          this.error = err?.error?.message ?? 'Loading KPIs failed';
         }
       });
   }
 
   loadUsers() {
-    const url = `${getApiBaseUrl()}/admin/users`;
-    this.http.get<User[]>(url).subscribe({
+    this.http.get<User[]>(this.usersUrl)
+      .pipe(
+        timeout(10000),
+        catchError((err) => {
+          console.error('Unable to load users for KPI page', err);
+          this.error = this.error || 'Users list unavailable';
+          return of([] as User[]);
+        })
+      )
+      .subscribe({
       next: (data) => this.users = data ?? [],
-      error: (err) => console.error('Unable to load users for KPI page', err)
     });
   }
 
@@ -94,13 +119,29 @@ export class AdminKpi {
     }
 
     const url = `${getApiBaseUrl()}/admin/dashboard/kpis/${encodeURIComponent(user.username)}`;
-    this.loading = true;
+    this.loadingUser = true;
+    this.error = '';
     this.http.get<UserKpiResponse>(url)
-      .pipe(finalize(() => { this.loading = false; }))
+      .pipe(
+        timeout(10000),
+        catchError((err) => {
+          this.error = err?.error?.message ?? 'Unable to load user KPIs (timeout/API unreachable)';
+          return of(null);
+        }),
+        finalize(() => { this.loadingUser = false; })
+      )
       .subscribe({
-        next: (data) => this.userKpis = data ?? null,
-        error: (err) => this.error = err?.error?.message ?? 'Unable to load user KPIs'
+        next: (data) => this.userKpis = data
       });
+  }
+
+  retryLoad() {
+    if (this.selectedUser) {
+      this.selectUser(this.selectedUser);
+      return;
+    }
+    this.loadKpis();
+    this.loadUsers();
   }
 
   goToSubscriptions() {
