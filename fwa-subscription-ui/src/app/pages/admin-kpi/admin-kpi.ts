@@ -42,6 +42,7 @@ export class AdminKpi {
   loadingGlobal = false;
   loadingUser = false;
   error = '';
+  viewMode: 'global' | 'user' = 'global';
   kpis: AdminKpiResponse = {
     totalSubscriptions: 0,
     active: 0,
@@ -53,6 +54,7 @@ export class AdminKpi {
   users: User[] = [];
   selectedUser: User | null = null;
   userKpis: UserKpiResponse | null = null;
+  selectedUserKpis: UserKpiResponse | null = null;
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -72,6 +74,7 @@ export class AdminKpi {
   loadKpis() {
     this.loadingGlobal = true;
     this.error = '';
+    this.viewMode = this.selectedUser ? 'user' : 'global';
 
     this.http.get<AdminKpiResponse>(this.apiUrl)
       .pipe(
@@ -125,6 +128,8 @@ export class AdminKpi {
   selectUser(user: User | null) {
     this.selectedUser = user;
     this.userKpis = null;
+    this.selectedUserKpis = null;
+    this.viewMode = user ? 'user' : 'global';
 
     if (!user) {
       return;
@@ -143,7 +148,10 @@ export class AdminKpi {
         finalize(() => { this.loadingUser = false; })
       )
       .subscribe({
-        next: (data) => this.userKpis = data
+        next: (data) => {
+          this.userKpis = data;
+          this.selectedUserKpis = data;
+        }
       });
   }
 
