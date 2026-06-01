@@ -23,8 +23,8 @@
       </div>
 
       <div class="mb-3">
-        <label class="form-label">Role</label>
-        <select class="form-select" [(ngModel)]="role" [disabled]="loading">
+        <label for="roleSelect" class="form-label">Role</label>
+        <select id="roleSelect" class="form-select" [(ngModel)]="role" [disabled]="loading" aria-required="true">
           <option value="AGENT">AGENT</option>
           <option value="SUPER_ADMIN">SUPER_ADMIN</option>
         </select>
