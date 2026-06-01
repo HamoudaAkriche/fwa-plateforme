@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 
 import { getApiBaseUrl } from '../../services/api-base';
 
@@ -18,7 +19,7 @@ type AdminKpiResponse = {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './admin-kpi.html',
-  styleUrl: './admin-kpi.css',
+  styleUrls: ['./admin-kpi.css'],
 })
 export class AdminKpi {
   private readonly apiUrl = `${getApiBaseUrl()}/admin/dashboard/kpis`;
@@ -43,23 +44,22 @@ export class AdminKpi {
     this.loading = true;
     this.error = '';
 
-    this.http.get<AdminKpiResponse>(this.apiUrl).subscribe({
-      next: (data) => {
-        this.kpis = {
-          totalSubscriptions: data?.totalSubscriptions ?? 0,
-          active: data?.active ?? 0,
-          suspended: data?.suspended ?? 0,
-          terminated: data?.terminated ?? 0,
-          createdToday: data?.createdToday ?? 0,
-        };
-      },
-      error: (err) => {
-        this.error = err?.error?.message ?? 'Loading KPIs failed';
-      },
-      complete: () => {
-        this.loading = false;
-      }
-    });
+    this.http.get<AdminKpiResponse>(this.apiUrl)
+      .pipe(finalize(() => { this.loading = false; }))
+      .subscribe({
+        next: (data) => {
+          this.kpis = {
+            totalSubscriptions: data?.totalSubscriptions ?? 0,
+            active: data?.active ?? 0,
+            suspended: data?.suspended ?? 0,
+            terminated: data?.terminated ?? 0,
+            createdToday: data?.createdToday ?? 0,
+          };
+        },
+        error: (err) => {
+          this.error = err?.error?.message ?? 'Loading KPIs failed';
+        }
+      });
   }
 
   goToSubscriptions() {
