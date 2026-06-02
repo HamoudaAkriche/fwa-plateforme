@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -82,12 +82,15 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
   rowActionInProgressId: number | null = null;
   deletingInProgressId: number | null = null;
   error = '';
+  formError = '';
   page = 0;
   size = 10;
   totalElements = 0;
   totalPages = 0;
   readonly pageSizeOptions = [5, 10, 20, 50];
+  readonly offerOptions = ['Enterprise Gigabit - 5G', 'Business Standard - 4G/5G', 'IoT Dedicated Link'];
 
+  deletingSubscription: Subscription | null = null;
   newMsisdn = '';
   newCustomerName = '';
   newOffer = '';
@@ -97,6 +100,7 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
   positionCoordinatesText = '';
   history: SubscriptionHistory[] = [];
   historyForId: number | null = null;
+  loadingHistory = false;
   comments: SubscriptionComment[] = [];
   commentsForId: number | null = null;
   newComment = '';
@@ -127,13 +131,13 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
   get isSuperAdmin(): boolean {
     return this.auth.isSuperAdmin();
   }
-  
 
   constructor(
     private http: HttpClient,
     private auth: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit() {
@@ -179,7 +183,6 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
         };
       },
       error: () => {
-        // error already handled
       },
       complete: () => {
         this.loadingStats = false;
@@ -212,27 +215,28 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
         this.page = data.number ?? 0;
         this.size = data.size ?? this.size;
 
-        this.cdr.detectChanges();
-
         if (this.totalPages > 0 && this.page >= this.totalPages) {
           this.page = this.totalPages - 1;
-          this.load();
+          this.load(false);
           return;
         }
+
+        this.loading = false;
       },
       error: () => {
         this.error = 'Erreur chargement subscriptions (JWT/CORS/API).';
+        this.loading = false;
       },
-      complete: () => {
-        setTimeout(() => {
-          this.loading = false;
-        });
-      }
     });
   }
 
   addSubscription() {
     this.error = '';
+    this.formError = '';
+    if (!this.newMsisdn.trim() || !this.newCustomerName.trim() || !this.newOffer) {
+      this.formError = 'All fields are required.';
+      return;
+    }
     this.creating = true;
     this.http.post(this.apiUrl, {
       msisdn: this.newMsisdn,
@@ -247,22 +251,20 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
         this.newOffer = '';
         this.newLatitude = null;
         this.newLongitude = null;
+        this.formError = '';
         this.resetMapView();
-        setTimeout(() => {
-          this.creating = false;
-          this.page = 0;
-          this.loadStats(); // dashboard refresh with loader
-          this.load();
-        });
+        this.page = 0;
+        this.loadStats();
+        this.load();
       },
       error: () => {
-        this.error = "Erreur lors de l'ajout";
-        setTimeout(() => {
-          this.creating = false;
-        });
+        this.formError = "Erreur lors de l'ajout";
+      },
+      complete: () => {
+        this.creating = false;
       }
     });
-  } 
+  }
 
   activate(id: number) {
     if (this.rowActionInProgressId !== null || this.deletingInProgressId !== null) {
@@ -273,18 +275,15 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
     this.rowActionInProgressId = id;
     this.http.put(`${this.apiUrl}/${id}/activate`, {}).subscribe({
       next: () => {
-        setTimeout(() => {
-          this.rowActionInProgressId = null;
-          this.page = 0;
-          this.loadStats(); // dashboard refresh with loader
-          this.load();
-        });
+        this.page = 0;
+        this.loadStats();
+        this.load();
       },
       error: () => {
         this.error = "Erreur activation";
-        setTimeout(() => {
-          this.rowActionInProgressId = null;
-        });
+      },
+      complete: () => {
+        this.rowActionInProgressId = null;
       }
     });
   }
@@ -298,18 +297,15 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
     this.rowActionInProgressId = id;
     this.http.put(`${this.apiUrl}/${id}/suspend`, {}).subscribe({
       next: () => {
-        setTimeout(() => {
-          this.rowActionInProgressId = null;
-          this.page = 0;
-          this.loadStats(); // dashboard refresh with loader
-          this.load();
-        });
+        this.page = 0;
+        this.loadStats();
+        this.load();
       },
       error: () => {
         this.error = "Erreur suspension";
-        setTimeout(() => {
-          this.rowActionInProgressId = null;
-        });
+      },
+      complete: () => {
+        this.rowActionInProgressId = null;
       }
     });
   }
@@ -323,22 +319,26 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
     this.rowActionInProgressId = id;
     this.http.put(`${this.apiUrl}/${id}/terminate`, {}).subscribe({
       next: () => {
-        setTimeout(() => {
-          this.rowActionInProgressId = null;
-          this.page = 0;
-          this.loadStats(); // dashboard refresh with loader
-          this.load();
-        });
+        this.page = 0;
+        this.loadStats();
+        this.load();
       },
       error: () => {
         this.error = "Erreur résiliation";
-        setTimeout(() => {
-          this.rowActionInProgressId = null;
-        });
+      },
+      complete: () => {
+        this.rowActionInProgressId = null;
       }
     });
   }
 
+  confirmDelete(subscription: Subscription) {
+    this.deletingSubscription = subscription;
+  }
+
+  cancelDelete() {
+    this.deletingSubscription = null;
+  }
 
   delete(id: number) {
     if (this.rowActionInProgressId !== null || this.deletingInProgressId !== null) {
@@ -346,21 +346,19 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
     }
 
     this.error = '';
+    this.deletingSubscription = null;
     this.deletingInProgressId = id;
     this.http.delete(`${this.apiUrl}/${id}`).subscribe({
       next: () => {
-        setTimeout(() => {
-          this.deletingInProgressId = null;
-          this.page = 0;
-          this.loadStats(); // dashboard refresh with loader
-          this.load();
-        });
+        this.page = 0;
+        this.loadStats();
+        this.load();
       },
       error: () => {
         this.error = "Erreur suppression";
-        setTimeout(() => {
-          this.deletingInProgressId = null;
-        });
+      },
+      complete: () => {
+        this.deletingInProgressId = null;
       }
     });
   }
@@ -368,6 +366,8 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
   showHistory(id: number) {
     this.error = '';
     this.historyForId = id;
+    this.history = [];
+    this.loadingHistory = true;
     this.commentsForId = null;
     this.comments = [];
     this.newComment = '';
@@ -377,7 +377,8 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
       error: () => {
         this.error = "Erreur chargement historique";
         this.history = [];
-      }
+      },
+      complete: () => this.loadingHistory = false
     });
   }
 
@@ -538,7 +539,6 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
       return direct;
     }
 
-    // Java can return nanoseconds; JS Date supports milliseconds max.
     const truncated = normalized.replace(/(\.\d{3})\d+/, '$1');
     const retried = new Date(truncated);
 
@@ -556,6 +556,10 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
 
   openAdminKpiPage() {
     this.router.navigateByUrl('/admin/kpi');
+  }
+
+  openSubscriptionsPage() {
+    this.router.navigateByUrl('/subscriptions');
   }
 
   onImportFileSelected(event: Event) {
@@ -667,12 +671,14 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
     }).addTo(this.addMap);
 
     this.addMap.on('click', (event: any) => {
-      const latitude = Number(event.latlng.lat.toFixed(6));
-      const longitude = Number(event.latlng.lng.toFixed(6));
-
-      this.newLatitude = latitude;
-      this.newLongitude = longitude;
-      this.placeAddMarker(latitude, longitude, false);
+      this.ngZone.run(() => {
+        const latitude = Number(event.latlng.lat.toFixed(6));
+        const longitude = Number(event.latlng.lng.toFixed(6));
+        this.newLatitude = latitude;
+        this.newLongitude = longitude;
+        this.placeAddMarker(latitude, longitude, false);
+        this.cdr.detectChanges();
+      });
     });
 
     setTimeout(() => this.addMap?.invalidateSize(), 0);
@@ -720,7 +726,7 @@ export class Subscriptions implements AfterViewInit, OnDestroy {
     setTimeout(() => this.viewMap?.invalidateSize(), 0);
   }
 
-  private resetMapView() {
+  resetMapView() {
     if (!this.addMap) {
       return;
     }

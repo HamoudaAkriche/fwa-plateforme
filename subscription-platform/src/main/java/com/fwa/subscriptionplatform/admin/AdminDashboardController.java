@@ -2,6 +2,7 @@ package com.fwa.subscriptionplatform.admin;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fwa.subscriptionplatform.subscription.SubscriptionCommentRepository;
+import com.fwa.subscriptionplatform.subscription.SubscriptionHistory;
 import com.fwa.subscriptionplatform.subscription.SubscriptionHistoryRepository;
 import com.fwa.subscriptionplatform.subscription.SubscriptionRepository;
 import com.fwa.subscriptionplatform.subscription.SubscriptionStatus;
@@ -65,4 +67,19 @@ public class AdminDashboardController {
     }
 
     public record UserKpiResponse(String username, long commentsCount, long totalActions, long creates, long actionsToday) {}
+
+    public record ActivityItem(long subscriptionId, String action, String performedBy, String actionDate) {}
+
+    @GetMapping("/kpis/{username}/activity")
+    public List<ActivityItem> getActivityForUser(@PathVariable String username) {
+        return historyRepository.findTop10ByPerformedByOrderByActionDateDesc(username)
+                .stream()
+                .map(h -> new ActivityItem(
+                        h.getSubscriptionId(),
+                        h.getAction(),
+                        h.getPerformedBy(),
+                        h.getActionDate().toString()
+                ))
+                .toList();
+    }
 }

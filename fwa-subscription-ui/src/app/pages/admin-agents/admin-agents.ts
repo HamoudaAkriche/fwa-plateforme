@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth';
 import { getApiBaseUrl } from '../../services/api-base';
 
 type UserAccount = {
@@ -16,6 +17,7 @@ type UserAccount = {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './admin-agents.html',
+  styleUrl: './admin-agents.css',
 })
 export class AdminAgents {
   private readonly apiUrl = `${getApiBaseUrl()}/admin/agents`;
@@ -30,7 +32,11 @@ export class AdminAgents {
   error = '';
   success = '';
 
-  constructor(private http: HttpClient, private router: Router) {}
+  get isSuperAdmin(): boolean {
+    return this.auth.isSuperAdmin();
+  }
+
+  constructor(private http: HttpClient, private router: Router, private auth: AuthService) {}
 
   ngOnInit() {
     this.loadUsers();
@@ -88,9 +94,7 @@ export class AdminAgents {
           this.error = err?.error?.message ?? 'Creation impossible';
         },
         complete: () => {
-          setTimeout(() => {
-            this.loading = false;
-          });
+          this.loading = false;
         }
       });
   }
@@ -123,7 +127,20 @@ export class AdminAgents {
     });
   }
 
-  backToSubscriptions() {
+  logout() {
+    this.auth.logout();
+    this.router.navigateByUrl('/login');
+  }
+
+  openAdminKpiPage() {
+    this.router.navigateByUrl('/admin/kpi');
+  }
+
+  openSubscriptionsPage() {
     this.router.navigateByUrl('/subscriptions');
+  }
+
+  openAdminAccountsPage() {
+    this.router.navigateByUrl('/admin/accounts');
   }
 }

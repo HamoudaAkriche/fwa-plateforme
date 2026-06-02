@@ -1,1 +1,57 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --secondary-fixed: #d3e4fe;
+  --on-secondary-container: #54647a;
+  --on-secondary-fixed-variant: #38485d;
+  --surface-container-high: #e2e7ff;
+  --surface-container: #eaedff;
+  --on-primary-fixed-variant: #003ea8;
+  --on-primary: #ffffff;
+  --surface-variant: #dae2fd;
+  --surface-container-low: #f2f3ff;
+  --on-surface: #131b2e;
+  --on-error: #ffffff;
+  --on-tertiary: #ffffff;
+  --surface-container-highest: #dae2fd;
+  --secondary: #505f76;
+  --secondary-fixed-dim: #b7c8e1;
+  --outline: #737686;
+  --background: #faf8ff;
+  --primary-fixed: #dbe1ff;
+  --surface-dim: #d2d9f4;
+  --on-primary-container: #eeefff;
+  --on-secondary-fixed: #0b1c30;
+  --tertiary-container: #bc4800;
+  --on-primary-fixed: #00174b;
+  --primary: #004ac6;
+  --on-secondary: #ffffff;
+  --on-error-container: #93000a;
+  --primary-fixed-dim: #b4c5ff;
+  --inverse-primary: #b4c5ff;
+  --surface-tint: #0053db;
+  --surface-bright: #faf8ff;
+  --tertiary: #943700;
+  --on-background: #131b2e;
+  --error: #ba1a1a;
+  --inverse-on-surface: #eef0ff;
+  --error-container: #ffdad6;
+  --on-tertiary-fixed-variant: #7d2d00;
+  --outline-variant: #c3c6d7;
+  --inverse-surface: #283044;
+  --tertiary-fixed: #ffdbcd;
+  --tertiary-fixed-dim: #ffb596;
+  --primary-container: #2563eb;
+  --surface-container-lowest: #ffffff;
+  --on-tertiary-container: #ffede6;
+  --on-tertiary-fixed: #360f00;
+  --surface: #faf8ff;
+  --secondary-container: #d0e1fb;
+  --on-surface-variant: #434655;
+  --border-radius: 0.125rem;
+  --border-radius-lg: 0.25rem;
+  --border-radius-xl: 0.5rem;
+  --border-radius-full: 0.75rem;
+}
+
+body {
+  margin: 0;
+}
